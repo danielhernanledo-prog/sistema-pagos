@@ -914,8 +914,7 @@
             actualizarSelectAnios();
             actualizarDatalistProveedores();
             
-            // PROTECCIÓN: Solo actualizamos las opciones de la empresa en el modal si este está CERRADO.
-            // Si el usuario lo tiene abierto cargando o editando, evitamos sobrescribir su selección.
+            // Si el modal está cerrado, actualizamos la lista manteniendo cualquier valor seleccionado de fondo
             const modal = document.getElementById('modal-nuevo');
             if (modal && modal.classList.contains('hidden')) {
                 actualizarOpcionesEmpresaModal();
@@ -958,13 +957,28 @@
         function actualizarOpcionesEmpresaModal(empresaASeleccionar = '') {
             const select = document.getElementById('nuevo-empresa');
             if (!select) return;
+            
+            // Prioridad de selección:
+            // 1. Parámetro explícito pasado a la función (si existe)
+            // 2. Valor actual seleccionado manualmente por el usuario en el select
+            // 3. Valor del filtro de empresa activo en la pantalla principal
+            // 4. Default "MARCELO VELASCO"
+            const valorExistenteModal = select.value ? select.value.toUpperCase() : '';
+            const filtroEmpresaActivo = document.getElementById('filter-empresa')?.value ? document.getElementById('filter-empresa').value.toUpperCase() : '';
+            
+            let valorAEstablecer = empresaASeleccionar ? empresaASeleccionar.toUpperCase() : (valorExistenteModal || filtroEmpresaActivo || 'MARCELO VELASCO');
+
             const baseEmpresas = ['MARCELO VELASCO', 'ASPERJAR', 'LBM'];
             const datasetEmpresas = [...new Set(allData.map(d => (d.empresa || '').trim().toUpperCase()))].filter(Boolean);
             const empresasTotales = [...new Set([...baseEmpresas, ...datasetEmpresas])];
+            
             select.innerHTML = empresasTotales.map(emp => `<option value="${emp}">${emp}</option>`).join('');
             
-            if (empresaASeleccionar) {
-                select.value = empresaASeleccionar.toUpperCase();
+            // Asignación segura del valor que el usuario eligió o filtró
+            if (empresasTotales.includes(valorAEstablecer)) {
+                select.value = valorAEstablecer;
+            } else {
+                select.value = 'MARCELO VELASCO';
             }
         }
 
@@ -1006,7 +1020,7 @@
                     document.getElementById('form-nuevo-pago').reset();
                     document.getElementById('edit-id').value = '';
                     const currentEmpresa = document.getElementById('filter-empresa').value;
-                    actualizarOpcionesEmpresaModal(currentEmpresa || 'MARCELO VELASCO');
+                    actualizarOpcionesEmpresaModal(currentEmpresa || '');
                     document.getElementById('nuevo-fecha').value = new Date().toISOString().split('T')[0];
                 }
                 modal.classList.remove('hidden');
@@ -1240,21 +1254,4 @@
                 type: 'bar',
                 data: {
                     labels: sortedPeriodos,
-                    datasets: [{ label: 'Monto Total ($)', data: sortedPeriodos.map(k => periodosMap[k].monto), backgroundColor: '#2563eb' }]
-                },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
-            });
-
-            if (chartEmpresasObj) chartEmpresasObj.destroy();
-            chartEmpresasObj = new Chart(document.getElementById('chartEmpresas').getContext('2d'), {
-                type: 'doughnut',
-                data: {
-                    labels: Object.keys(empresasMap),
-                    datasets: [{ data: Object.values(empresasMap), backgroundColor: ['#6366f1', '#14b8a6', '#f59e0b', '#ec4899', '#8b5cf6', '#06b6d4', '#10b981'] }]
-                },
-                options: { responsive: true, maintainAspectRatio: false }
-            });
-        }
-    </script>
-</body>
-</html>
+                    datasets: [{ label: 'Monto Total ($)', data: sortedPeriodos.m
