@@ -1254,4 +1254,21 @@
                 type: 'bar',
                 data: {
                     labels: sortedPeriodos,
-                    datasets: [{ label: 'Monto Total ($)', data: sortedPeriodos.m
+                    datasets: [{ label: 'Monto Total ($)', data: sortedPeriodos.map(k => periodosMap[k].monto), backgroundColor: '#2563eb' }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+            });
+
+            if (chartEmpresasObj) chartEmpresasObj.destroy();
+            chartEmpresasObj = new Chart(document.getElementById('chartEmpresas').getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(empresasMap),
+                    datasets: [{ data: Object.values(empresasMap), backgroundColor: ['#6366f1', '#14b8a6', '#f59e0b', '#ec4899', '#8b5cf6', '#06b6d4', '#10b981'] }]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+        }
+    </script>
+</body>
+</html>
