@@ -955,7 +955,9 @@
             const datasetEmpresas = [...new Set(allData.map(d => (d.empresa || '').trim().toUpperCase()))].filter(Boolean);
             const empresasTotales = [...new Set([...baseEmpresas, ...datasetEmpresas])];
             select.innerHTML = empresasTotales.map(emp => `<option value="${emp}">${emp}</option>`).join('');
-            if (empresaASeleccionar && empresasTotales.includes(empresaASeleccionar.toUpperCase())) {
+            
+            // CORRECCIÓN CLAVE: Asegurar selección exacta y limpia evitando que caiga por defecto en Marcelo Velasco
+            if (empresaASeleccionar) {
                 select.value = empresaASeleccionar.toUpperCase();
             }
         }
@@ -992,15 +994,17 @@
             const modal = document.getElementById('modal-nuevo');
             if (show) {
                 actualizarDatalistProveedores();
-                actualizarOpcionesEmpresaModal();
-                modal.classList.remove('hidden');
-                if (!document.getElementById('edit-id').value) {
+                // Si NO estamos editando (es nuevo pago), verificamos si hay una empresa filtrada activa
+                const editIdVal = document.getElementById('edit-id').value;
+                if (!editIdVal) {
                     document.getElementById('modal-titulo').innerHTML = `<i class="fa-solid fa-circle-plus text-indigo-600"></i> Cargar Nuevo Pago / Cheque`;
                     document.getElementById('form-nuevo-pago').reset();
+                    document.getElementById('edit-id').value = '';
                     const currentEmpresa = document.getElementById('filter-empresa').value;
                     actualizarOpcionesEmpresaModal(currentEmpresa || 'MARCELO VELASCO');
                     document.getElementById('nuevo-fecha').value = new Date().toISOString().split('T')[0];
                 }
+                modal.classList.remove('hidden');
             } else {
                 modal.classList.add('hidden');
                 document.getElementById('edit-id').value = '';
@@ -1012,15 +1016,21 @@
             const item = allData.find(d => d.id === id);
             if (!item) return;
 
+            // 1. Establecer el ID de edición primero para que toggleModalNuevo sepa que es una edición
             document.getElementById('edit-id').value = item.id;
             document.getElementById('modal-titulo').innerHTML = `<i class="fa-solid fa-pen-to-square text-indigo-600"></i> Editar Registro #${item.id}`;
+            
+            // 2. Poblar opciones y forzar la selección exacta de la empresa del registro
             actualizarOpcionesEmpresaModal(item.empresa || 'MARCELO VELASCO');
+            
             document.getElementById('nuevo-numero').value = item.numero || '';
             document.getElementById('nuevo-proveedor').value = item.proveedor || '';
             document.getElementById('nuevo-monto').value = item.monto || '';
             document.getElementById('nuevo-fecha').value = item.fechaVencimiento || '';
             document.getElementById('nuevo-estado').value = (item.estado || 'entró').toLowerCase();
-            window.toggleModalNuevo(true);
+            
+            // 3. Mostrar modal directamente sin resetear los valores recién asignados
+            document.getElementById('modal-nuevo').classList.remove('hidden');
         };
 
         window.switchTab = function(tab) {
